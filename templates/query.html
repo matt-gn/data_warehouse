@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AMRDC Data Warehouse</title>
+        <link rel='stylesheet' id='uwmadison-fonts-css'
+            href='https://amrdc.ssec.wisc.edu/wp-test/wp-content/themes/amrdc-theme/dist/fonts/uw160/fonts.css?ver=1.0.0'
+            type='text/css' media='all' />
+        <link rel='stylesheet' id='uwmadison-style-css'
+            href='https://amrdc.ssec.wisc.edu/wp-test/wp-content/themes/amrdc-theme/dist/main.min.css?ver=0.7.0'
+            type='text/css' media='all' />
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/query.css') }}">
+    </head>
+
+    <body>
+
+        {% include 'header.html' %}
+
+        <div id="row_container">
+            <div id="entry_box_container">
+                {% include 'query_box.html' %}
+            </div>
+        </div>
+
+        <div id="results_container">
+            {% block results %}{% endblock %}
+        </div>
+
+    </body>
+
+</html>

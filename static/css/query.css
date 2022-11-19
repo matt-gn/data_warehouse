@@ -1,0 +1,29 @@
+.button {
+    color: white;
+    text-align: center;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+form {
+    display: inline-flex;
+}
+
+#query_ui {
+    width: 100%;
+    margin: auto;
+    display: inline-flex;
+}
+
+.custom-select {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#row_container,
+#results_container {
+    display: table;
+    width: auto;
+    margin: auto;
+    padding: 10px;
+}

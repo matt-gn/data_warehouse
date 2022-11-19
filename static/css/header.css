@@ -1,0 +1,30 @@
+#header {
+    padding: 10px;
+    display: flex;
+}
+
+#logo {
+    height: 100px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 10px;
+}
+
+#nav {
+    width: fit-content;
+    margin: auto;
+    text-align: center;
+    font-size: 18px;
+    padding: 10px;
+}
+
+#title {
+    width: auto;
+    margin: auto;
+}
+
+h1 {
+    width: fit-content;
+    margin: revert;
+}

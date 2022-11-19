@@ -1,0 +1,15 @@
+{% block header %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}">
+
+<div id="header">
+    <div id="title">
+        <a href="https://amrdcdata.ssec.wisc.edu"><img src="{{url_for('static', filename='logo.png')}}" id="logo" /></a>
+        <h1>AMRDC Data Warehouse</h1>
+    </div>
+</div>
+<div id="nav">
+    <a href="/">Download customized datasets</a> | <a href="/query">Search and explore data</a>
+</div>
+
+{% endblock %}

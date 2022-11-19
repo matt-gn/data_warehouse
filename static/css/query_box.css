@@ -1,0 +1,62 @@
+.loader {
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #c5050c;
+    border-right: 16px solid grey;
+    border-bottom: 16px solid #007db1;
+    border-left: 16px solid grey;
+    width: 75px;
+    height: 75px;
+    margin: auto;
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+}
+
+@-webkit-keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#query_ui {
+    background-color: lightgray;
+    border: 2px solid gray;
+    border-radius: 15px;
+    padding: 10px;
+}
+
+#loading_box {
+    display: none;
+    padding: 5px;
+    margin: auto;
+    width: fit-content;
+}
+
+#text {
+    width: inherit;
+    text-align: center;
+}
+
+#date_input {
+    display: inline-grid;
+}
+
+#startdate_box,
+#enddate_box {
+    display: inline-flex;
+    width: 400px;
+}

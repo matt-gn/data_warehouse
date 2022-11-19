@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AMRDC Data Warehouse</title>
+        <link rel='stylesheet' id='uwmadison-fonts-css'
+            href='https://amrdc.ssec.wisc.edu/wp-test/wp-content/themes/amrdc-theme/dist/fonts/uw160/fonts.css?ver=1.0.0'
+            type='text/css' media='all' />
+        <link rel='stylesheet' id='uwmadison-style-css'
+            href='https://amrdc.ssec.wisc.edu/wp-test/wp-content/themes/amrdc-theme/dist/main.min.css?ver=0.7.0'
+            type='text/css' media='all' />
+        <link rel="stylesheet" type='text/css' href="{{ url_for('static', filename='css/index.css') }}">
+        <script type="text/javascript" src="{{ url_for('static', filename='js/index.js') }}"></script>
+    </head>
+
+    <body>
+
+        {% include 'header.html' %}
+
+        <div id="tips">
+            <center>
+                <h5>Use the SHIFT or COMMAND key to select multiple options</h5>
+            </center>
+        </div>
+
+        <div id="row_container">
+            <div id="years_list">
+                <select name="years" id="years" multiple>
+                    {% for year in yearlist %}
+                    <option value="{{ year }}">{{ year }}</option>
+                    {% endfor %}
+                </select>
+                <br>
+                <center><input type="submit" value="Generate Station list" onclick="get_stations()"></center>
+            </div>
+
+            <div id="names_list">
+                <select name="names" id="names" multiple>
+                    <option value="">Select Stations</option>
+                </select>
+            </div>
+
+            <div id="measurements">
+                <select name="meas" id="meas" multiple>
+                    <option value="temperature">Temperature</option>
+                    <option value="pressure">Pressure</option>
+                    <option value="wind_speed">Wind Speed</option>
+                    <option value="wind_direction">Wind Direction</option>
+                    <option value="humidity">Humidity</option>
+                    <option value="delta_t">Delta-T</option>
+                </select>
+            </div>
+
+            <div id="format_button">
+                <select name="format" id="format" style="float:inline-start; margin:5px">
+                    <option value="">Select file format</option>
+                    <option value="csv">CSV (Comma-Separated Value)</option>
+                    <option value="xls">XLS (Excel)</option>
+                </select>
+            </div>
+
+            <div id="button">
+                <input type="submit" value="Download file" onclick="generate()">
+            </div>
+        </div>
+
+        <div id="citation_box">
+            <span id="link_anchor"></span>
+        </div>
+
+    </body>
+
+</html>

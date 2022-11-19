@@ -1,0 +1,161 @@
+{% block query_box %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/query_box.css') }}">
+<script type="text/javascript" src="{{ url_for('static', filename='js/query_box.js') }}"></script>
+
+Show me...
+
+<div id="query_ui" name="query_ui">
+    <form action="/results" method="post">
+
+        <!---   Datapoints    -->
+        <div id="datapoints" class="custom-select" style="width:150px;">
+            <select id="query_type" name="query_type" onchange="query_redirect();">
+                {% for option in fields['query_types'] %}
+                {% if option == query_type %}
+                <option value="{{ option }}" selected>{{ fields['query_types'][option] }}</option>
+                {% else %}
+                <option value="{{ option }}">{{ fields['query_types'][option] }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if query_type != 'all' %}
+        <!---   Measurements    -->
+        <div id="measurements" class="custom-select" style="width:150px;">
+            <select id="measurements" name="measurements">
+                {% for option in fields['measurements'] %}
+                {% if option == fields['selected']['measurements'] %}
+                <option value="{{ option }}" selected>{{ fields['measurements'][option] }}</option>
+                {% else %}
+                <option value="{{ option }}">{{ fields['measurements'][option] }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+        for
+
+        <!---   Locations (e.g. AWS stations)     -->
+        <div id="locations_div" class="custom-select" style="width:150px;">
+            <select id="locations" name="locations" multiple>
+                {% if 'all' in fields['selected']['locations'] %}
+                <option value="all" selected>all locations</option>
+                {% else %}
+                <option value="all">all locations</option>
+                {% endif %}
+                {% for option in fields['data_locations'] %}
+                {% if option in fields['selected']['locations'] %}
+                <option value="{{ option }}" selected>{{ option }}</option>
+                {% else %}
+                <option value="{{ option }}">{{ option }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if query_type == 'all' %}
+
+        at
+
+        <!---   Intervals     -->
+        <div id="intervals_div" class="custom-select" style="width:150px;">
+            <select id="intervals" name="intervals">
+                {% for option in fields['intervals'] %}
+                {% if option == fields['selected']['interval'] %}
+                <option value="{{ option }}" selected>{{ fields['intervals'][option] }}</option>
+                {% else %}
+                <option value="{{ option }}">{{ fields['intervals'][option] }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+        {% if query_type != 'all' %}
+        <!---   Groupings    -->
+        <div id="grouping_div" class="custom-select" style="width:150px;">
+            <select id="groupings" name="groupings">
+                {% for option in fields['groupings'] %}
+                {% if option == fields['selected']['grouping'] %}
+                <option value="{{ option }}" selected>{{ fields['groupings'][option] }}</option>
+                {% else %}
+                <option value="{{ option }}">{{ fields['groupings'][option] }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+        <!---   Time span - from/to     -->
+        <div id="date_input">
+
+            <div id="startdate_box" class="custom-select">
+                <div id="text" class="text">from</div>
+                <select id="startyear" name="startyear">
+                    <option value="">Start year</option>
+                    {% for option in fields['yearlist'] %}
+                    {% if option == fields['selected']['startyear'] %}
+                    <option value="{{ option }}" selected>{{ option }}</option>
+                    {% else %}
+                    <option value="{{ option }}">{{ option }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                /
+                {% if fields['selected']['startmonth'] %}
+                <input type="text" value="{{ fields['selected']['startmonth'] }}" id="startmonth" name="startmonth">
+                {% else %}
+                <input type="text" value="01" id="startmonth" name="startmonth">
+                {% endif %}
+                /
+                {% if fields['selected']['startday'] %}
+                <input type="text" value="{{ fields['selected']['startday'] }}" id="startday" name="startday">
+                {% else %}
+                <input type="text" value="01" id="startday" name="startday">
+                {% endif %}
+            </div>
+
+            <div id="enddate_box" class="custom-select">
+                <div id="text" class="text">to</div>
+                <select id="endyear" name="endyear">
+                    <option value="">End year</option>
+                    {% for option in fields['yearlist'] %}
+                    {% if option == fields['selected']['endyear'] %}
+                    <option value="{{ option }}" selected>{{ option }}</option>
+                    {% else %}
+                    <option value="{{ option }}">{{ option }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                /
+                {% if fields['selected']['endmonth'] %}
+                <input type="text" value="{{ fields['selected']['endmonth'] }}" id="endmonth" name="endmonth">
+                {% else %}
+                <input type="text" value="12" id="endmonth" name="endmonth">
+                {% endif %}
+                /
+                {% if fields['selected']['endday'] %}
+                <input type="text" value="{{ fields['selected']['endday'] }}" id="endday" name="endday">
+                {% else %}
+                <input type="text" value="31" id="endday" name="endday">
+                {% endif %}
+            </div>
+        </div>
+
+        <div id="submit_button">
+            <button type="submit" class="button" onclick="displayLoading()">Submit</button>
+        </div>
+    </form>
+</div>
+
+<div id="loading_box">
+    <div class="loader"></div>
+    <div>
+        <p>Searching database....</p>
+    </div>
+</div>
+
+{% endblock %}

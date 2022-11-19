@@ -1,0 +1,39 @@
+{% extends 'query.html' %}
+
+{% block results %}
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/query_results.js') }}"></script>
+
+<table id="result_table" name="result_table" class="display" width="100%">
+
+    <thead>
+        <tr>
+            {% for label in columns %}
+            <th>{{ label }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for row in results %}
+        <tr>
+            {% for datapoint in row %}
+            <td> {{ datapoint }} </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+
+    <tfoot>
+        <tr>
+            {% for label in columns %}
+            <th>{{ label }}</th>
+            {% endfor %}
+        </tr>
+    </tfoot>
+
+</table>
+
+{% endblock %}
