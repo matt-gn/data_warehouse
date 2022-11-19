@@ -76,7 +76,6 @@ def main():
         )
         database.commit()
         print(f"Finished with 10 min data. Extracted {extracted} data files.")
-        database.close()
     print("Done.")
 
 
