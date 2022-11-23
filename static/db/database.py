@@ -55,7 +55,7 @@ def main():
                     )
                     datetime = f"{row[0]}-{row[2].rjust(2, '0')}-{row[3].rjust(2, '0')} {row[4][0:2]}:{row[4][2:]}"
                     database.execute(
-                        "INSERT INTO aws_10min VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        "INSERT INTO aws_10min VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (
                             obs_num,
                             station,
