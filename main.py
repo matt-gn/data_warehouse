@@ -56,11 +56,13 @@ def download_data():
 def generate_citation():
     """Generate an AWS Collection citation based on user input"""
     years = request.args.get("year").split(",")
-    if len(years) == 0:
-        return "Error: Incomplete query"
-    if len(years) == 1:
-        return f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data, {years[0]}. AMRDC Data Repository, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
-    return f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data. AMRDC Data Repository. Subset used: {years[0]} - {years[-1]}, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
+    match len(years):
+        case 0:
+            return "Error: Incomplete query"
+        case 1:
+            return f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data, {years[0]}. AMRDC Data Repository, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
+        case _:
+            return f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data. AMRDC Data Repository. Subset used: {years[0]} - {years[-1]}, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
 
 
 def query_db(years, names, measurements):

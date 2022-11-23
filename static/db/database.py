@@ -74,12 +74,14 @@ def main():
                 if extracted % 1000 == 0:
                     print(f"Extracted {extracted} / {len(data_files)} records")
         print(f"Finished with 10 min data. Extracted {extracted} data files.")
+        print("Creating metadata....")
         database.execute(
             "CREATE TABLE aws_10min_names AS SELECT DISTINCT(name) FROM aws_10min"
         )
         database.execute(
             "CREATE TABLE aws_10min_years AS SELECT DISTINCT(strftime('%Y', datetime)) FROM aws_10min"
         )
+        print("Creating indexes....")
         database.execute("CREATE INDEX aws_10min_index_name ON aws_10min (name)")
         database.execute(
             "CREATE INDEX aws_10min_index_namedate ON aws_10min (name, dateint)"
