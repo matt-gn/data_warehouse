@@ -1,19 +1,20 @@
+""" AMRDC Data Warehouse - This Flask app provides a user interface to query, display, slice,
+and download AMRDC AWS data."""
 import datetime
 import sqlite3
 import flask_excel
 from flask import Flask, jsonify, request, render_template, url_for
 
-### TODO URGENT Either rebuild db; or drop+remake years table, indices
-### TODO Optimize
 ### TODO Query: Implement 'download' links; API hook with JSON response
 ### TODO Download: Add 'all' and datetime search
 
 app = Flask(__name__)
-DB = "/static/db/aws.db"
+DB = "static/db/aws.db"
 
 
 @app.route("/")
 def home_page():
+    """Fetches the list of available years for AWS and renders the homepage template"""
     with sqlite3.connect(DB) as connection:
         yearlist = sorted(
             year[0]
@@ -24,6 +25,7 @@ def home_page():
 
 @app.route("/station_list")
 def station_list():
+    """Queries the database for available stations based on selected years"""
     years = request.args.get("year").split(",")
     with sqlite3.connect(DB) as connection:
         names = sorted(
@@ -37,6 +39,7 @@ def station_list():
 
 @app.route("/download", methods=["GET"])
 def download_data():
+    """Collects user input, queries the database, constructs and returns our payload"""
     years = tuple(request.args.get("year").split(","))
     stations = tuple(request.args.get("station").split(","))
     measurements = tuple(request.args.get("meas").split(","))
@@ -51,6 +54,7 @@ def download_data():
 
 @app.route("/citation", methods=["GET"])
 def generate_citation():
+    """Generate an AWS Collection citation based on user input"""
     years = request.args.get("year").split(",")
     if len(years) == 0:
         return "Error: Incomplete query"
@@ -60,6 +64,7 @@ def generate_citation():
 
 
 def query_db(years, names, measurements):
+    """Assemble the SELECT statement and query the database"""
     ### Parse input for AWS names and years and format the strings for use in the database query
     namelist = tuple(name.replace("%20", " ") for name in names)
     yearlist = tuple(str(year) for year in years)
@@ -79,6 +84,7 @@ def query_db(years, names, measurements):
 
 @app.route("/query", methods=["GET"])
 def query():
+    """Renders the user input box"""
     query_type = request.args.get("type")
     if not query_type:
         query_type = "all"
@@ -88,6 +94,7 @@ def query():
 
 @app.route("/results", methods=["POST"])
 def query_results():
+    """Queries the database and returns the results in the table template"""
     query_type = request.form.get("query_type")
     locations = request.form.getlist("locations") or ["all"]
     if "all" in locations:
@@ -96,7 +103,7 @@ def query_results():
     measurements = request.form.get("measurements")
     grouping = request.form.get("groupings")
     startdate = (
-        request.form.get("startyear").rjust(4, "9")
+        request.form.get("startyear").rjust(4, "0")
         + request.form.get("startmonth").rjust(2, "0")
         + request.form.get("startday").rjust(2, "0")
     )
@@ -106,10 +113,22 @@ def query_results():
         + request.form.get("endday").rjust(2, "0")
     )
     fields = init_fields(
-        query_type, measurements, locations, interval, grouping, startdate, enddate
+        query_type,
+        measurements,
+        locations,
+        interval,
+        grouping,
+        startdate,
+        enddate,
     )
     select = generate_query(
-        query_type, measurements, locations, interval, grouping, startdate, enddate
+        query_type,
+        measurements,
+        locations,
+        interval,
+        grouping,
+        startdate,
+        enddate,
     )
     print(select)
     with sqlite3.connect(DB) as connection:
@@ -134,6 +153,7 @@ def init_fields(
     startdate="",
     enddate="",
 ):
+    """Initializes the dropdown menus for the user input; also records + returns previous input"""
     with sqlite3.connect(DB) as connection:
         data_locations = sorted(
             x[0] for x in connection.execute("SELECT * FROM aws_10min_names").fetchall()
@@ -188,59 +208,60 @@ def init_fields(
 def generate_query(
     query_type, measurement, locations, interval, grouping, startdate, enddate
 ):
+    """Generates the SQL SELECT statement based on user input"""
     # ALL DATA, EACH STATION
     if query_type == "all":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, temperature, pressure, wind_speed, wind_direction, humidity, delta_t FROM aws_10min WHERE strftime('%Y%m%d', datetime)>=? AND strftime('%Y%m%d', datetime)<=? AND strftime('%H%M', datetime) % ? = 0 AND name IN ({','.join('?'*len(locations))}) LIMIT 2000",
-            [startdate, enddate, interval] + locations,
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, temperature, pressure, wind_speed, wind_direction, humidity, delta_t FROM aws_10min WHERE dateint BETWEEN ? AND ? AND strftime('%H%M', datetime) % ? = 0 AND name IN ({','.join('?'*len(locations))}) LIMIT 2000",
+            [int(startdate), int(enddate), interval] + locations,
         ]
     ##  AVG, ALL/SELECTED, YEAR
     elif query_type == "avg" and grouping == "year":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, avg({measurement}) FROM aws_10min WHERE strftime('%Y%m%d', datetime)>=? AND strftime('%Y%m%d', datetime)<=? AND({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y', datetime) LIMIT 2000",
-            [startdate, enddate] + locations,
+            f"SELECT name, strftime('%Y', datetime) as Year, avg({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y', datetime) LIMIT 2000",
+            [int(startdate), int(enddate)] + locations,
         ]
     ##  AVG, ALL/SELECTED, MONTH
     elif query_type == "avg" and grouping == "month":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, avg({measurement}) FROM aws_10min WHERE strftime('%Y%m%d', datetime)>=? AND strftime('%Y%m%d', datetime)<=? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m', datetime) LIMIT 2000",
-            [startdate, enddate] + locations,
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, avg({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m', datetime) LIMIT 2000",
+            [int(startdate), int(enddate)] + locations,
         ]
     ##  AVG, ALL/SELECTED, DAY
     elif query_type == "avg" and grouping == "day":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, avg({measurement}) FROM aws_10min WHERE strftime('%Y%m%d', datetime)>=? AND strftime('%Y%m%d', datetime)<=? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m%d', datetime) LIMIT 2000",
-            [startdate, enddate] + locations,
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, avg({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m%d', datetime) LIMIT 2000",
+            [int(startdate), int(enddate)] + locations,
         ]
     ##  AVG, ALL/SELECTED, NAME
     elif query_type == "avg" and grouping == "name":
         select = [
-            f"SELECT name, avg({measurement}) FROM aws_10min WHERE strftime('%Y%m%d', datetime)>=? AND strftime('%Y%m%d', datetime)<=? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name",
-            [startdate, enddate] + locations,
+            f"SELECT name, avg({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name",
+            [int(startdate), int(enddate)] + locations,
         ]
     ##  MAX/MIN, ALL/SELECTED, YEAR
     elif query_type in ("max", "min") and grouping == "year":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE strftime('%Y%m%d', datetime)>=? AND strftime('%Y%m%d', datetime)<=? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y', datetime) LIMIT 2000",
-            [startdate, enddate] + locations,
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y', datetime) LIMIT 2000",
+            [int(startdate), int(enddate)] + locations,
         ]
     ##  MAX/MIN, ALL/SELECTED, MONTH
     elif query_type in ("max", "min") and grouping == "month":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE strftime('%Y%m%d', datetime)>=? AND strftime('%Y%m%d', datetime)<=? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m', datetime) LIMIT 2000",
-            [startdate, enddate] + locations,
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m', datetime) LIMIT 2000",
+            [int(startdate), int(enddate)] + locations,
         ]
     ##  MAX/MIN, ALL/SELECTED, DAY
     elif query_type in ("max", "min") and grouping == "day":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE strftime('%Y%m%d', datetime)>=? AND strftime('%Y%m%d', datetime)<=? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m%d', datetime) LIMIT 2000",
-            [startdate, enddate] + locations,
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m%d', datetime) LIMIT 2000",
+            [int(startdate), int(enddate)] + locations,
         ]
     ##  MAX/MIN, ALL/SELECTED, NAME
     elif query_type in ("max", "min") and grouping == "name":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE (strftime('%Y%m%d', datetime)>=? AND strftime('%Y%m%d', datetime)<=?) AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name",
-            [startdate, enddate] + locations,
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name",
+            [int(startdate), int(enddate)] + locations,
         ]
     if locations == ["all"]:
         select[0] = select[0].replace(" AND name IN (?)", "")

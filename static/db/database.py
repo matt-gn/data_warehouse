@@ -4,6 +4,9 @@ DATABASE_NAME = "aws.db"
 SERVER_URL = "https://amrdcdata.ssec.wisc.edu/"
 API_KEY = "28933df5-45b8-41e0-a873-1e29ebc4aca5"
 
+### UPDATE 11/23/22 :: We're storing the date as an int in `dateint` : YYYYMMDD, as well as a str in `datetime`
+###                     This allows for efficient formatting and searching
+
 
 def main():
     ### Search for AWS QC data on repository and add dataset URLs to record_list list
@@ -30,7 +33,7 @@ def main():
     print("Creating database...")  ### Build database
     with sqlite3.connect(DATABASE_NAME) as database:
         database.execute(
-            "CREATE TABLE aws_10min (obs_num INT PRIMARY KEY, name TEXT, datetime TEXT, temperature INT, pressure INT, wind_speed INT, wind_direction INT, humidity INT, delta_t INT)"
+            "CREATE TABLE aws_10min (obs_num INT PRIMARY KEY, name TEXT, dateint INT, datetime TEXT, temperature INT, pressure INT, wind_speed INT, wind_direction INT, humidity INT, delta_t INT)"
         )
         obs_num = 0
         print(f"Database '{DATABASE_NAME}' created")
@@ -47,12 +50,16 @@ def main():
                 for line in data:
                     decoded_line = line.decode("utf-8")
                     row = decoded_line.split()
+                    dateint = int(
+                        f"{row[0].rjust(4, '0')}{row[2].rjust(2, '0')}{row[3].rjust(2, '0')}"
+                    )
                     datetime = f"{row[0]}-{row[2].rjust(2, '0')}-{row[3].rjust(2, '0')} {row[4][0:2]}:{row[4][2:]}"
                     database.execute(
                         "INSERT INTO aws_10min VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (
                             obs_num,
                             station,
+                            dateint,
                             datetime,
                             row[5],
                             row[6],
@@ -64,6 +71,9 @@ def main():
                     )
                     obs_num += 1
                 extracted += 1
+                if extracted % 1000 == 0:
+                    print(f"Extracted {extracted} / {len(data_files)} records")
+        print(f"Finished with 10 min data. Extracted {extracted} data files.")
         database.execute(
             "CREATE TABLE aws_10min_names AS SELECT DISTINCT(name) FROM aws_10min"
         )
@@ -72,10 +82,9 @@ def main():
         )
         database.execute("CREATE INDEX aws_10min_index_name ON aws_10min (name)")
         database.execute(
-            "CREATE INDEX aws_10min_index_namedate ON aws_10min (name, strftime('%Y%m', datetime))"
+            "CREATE INDEX aws_10min_index_namedate ON aws_10min (name, dateint)"
         )
         database.commit()
-        print(f"Finished with 10 min data. Extracted {extracted} data files.")
     print("Done.")
 
 
@@ -115,7 +124,7 @@ def reader():
     print("Connecting to database....")
     database = sqlite3.connect(DATABASE_NAME)
     database.execute(
-        "CREATE TABLE aws_3hr_data (obs_num INT PRIMARY KEY, name TEXT, datetime TEXT, temperature INT, pressure INT, wind_speed INT, wind_direction INT, humidity INT, delta_t INT)"
+        "CREATE TABLE aws_3hr_data (obs_num INT PRIMARY KEY, name TEXT, dateint INT, datetime TEXT, temperature INT, pressure INT, wind_speed INT, wind_direction INT, humidity INT, delta_t INT)"
     )
 
     obs_num = 0
