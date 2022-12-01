@@ -5,10 +5,7 @@ import sqlite3
 import flask_excel
 from flask import Flask, jsonify, request, render_template, url_for
 
-### TODO Query: Implement 'download' links; API hook with JSON response
-### TODO Download: Add 'all' and datetime search
-
-app = Flask(__name__)
+application = Flask(__name__)
 DB = "static/db/aws.db"
 
 ###########################
@@ -16,7 +13,7 @@ DB = "static/db/aws.db"
 ###########################
 
 
-@app.route("/", methods=["GET"])
+@application.route("/", methods=["GET"])
 def query():
     """Renders the user input box"""
     query_type = request.args.get("type")
@@ -26,7 +23,7 @@ def query():
     return render_template("query.html", query_type=query_type, fields=fields)
 
 
-@app.route("/results", methods=["POST"])
+@application.route("/results", methods=["POST"])
 def query_results():
     """Queries the database and returns the results in the table template"""
     query_type = request.form.get("query_type")
@@ -78,13 +75,13 @@ def query_results():
             columns=columns,
         )
     if request.form.get("submit") == "download":
-        flask_excel.init_excel(app)
+        flask_excel.init_excel(application)
         data_array = tuple(columns) + tuple(results)
         ## MAKE CITATION
         if startdate[0:4] == enddate[0:4]:
-            citation = f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data, {startdate[0:4]}. AMRDC Data Repository, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
+            citation = f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data, {startdate[0:4]}. AMRDC Data Repository. Accessed {datetime.date.today()}, doi 10.48567/1hn2-nw60"
         else:
-            citation = f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data. AMRDC Data Repository. Subset used: {startdate[0:4]} - {enddate[0:4]}, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
+            citation = f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data. AMRDC Data Repository. Subset years {startdate[0:4]} - {enddate[0:4]}. Accessed {datetime.date.today()}, doi 10.48567/1hn2-nw60"
         return flask_excel.make_response_from_array(
             data_array, file_type="csv", file_name=f"{citation}.csv"
         )
@@ -220,12 +217,12 @@ def generate_query(
 ###########################
 
 
-@app.route("/api/get", methods=["GET"])
+@application.route("/api/get", methods=["GET"])
 def api_sql_query():
     ## Get query from address + verify
     select = request.args.get("query")
     ## Primitive SQL Injection prevention right here:
-    query_terms = [word.upper() for word in select.replace(";", "").split()]
+    query_terms = [word.upper() for word in select.replace(";", "").replace("%20", "").split()]
     forbidden = [
         "DROP",
         "INSERT",
@@ -249,5 +246,4 @@ def api_sql_query():
 ###########################
 
 if __name__ == "__main__":
-    flask_excel.init_excel(app)
-    app.run(port=8000, debug=True)
+    application.run(host='0.0.0.0', port='8080')
