@@ -26,7 +26,7 @@ def home_page():
 @app.route("/station_list")
 def station_list():
     """Queries the database for available stations based on selected years"""
-    years = request.args.get("year").split(",")
+    years = [str(year) for year in request.args.get("year").split(",")]
     with sqlite3.connect(DB) as connection:
         names = sorted(
             connection.execute(
@@ -56,13 +56,13 @@ def download_data():
 def generate_citation():
     """Generate an AWS Collection citation based on user input"""
     years = request.args.get("year").split(",")
-    match len(years):
-        case 0:
-            return "Error: Incomplete query"
-        case 1:
-            return f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data, {years[0]}. AMRDC Data Repository, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
-        case _:
-            return f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data. AMRDC Data Repository. Subset used: {years[0]} - {years[-1]}, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
+    yearrange = len(years)
+    if yearrange == 0:
+        return "Error: Incomplete query"
+    elif yearrange == 1:
+        return f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data, {years[0]}. AMRDC Data Repository, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
+    else:
+        return f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data. AMRDC Data Repository. Subset used: {years[0]} - {years[-1]}, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
 
 
 def query_db(years, names, measurements):
@@ -132,7 +132,7 @@ def query_results():
         startdate,
         enddate,
     )
-    print(select)
+    print(select)  ## DEBUG
     with sqlite3.connect(DB) as connection:
         response = connection.execute(select[0], select[1])
         results = response.fetchall()
