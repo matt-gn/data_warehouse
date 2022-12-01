@@ -60,3 +60,13 @@
     display: inline-flex;
     width: 400px;
 }
+
+#buttons {
+    padding: 8px;
+    display: inline-grid;
+}
+
+[type="button"],
+[value="download"] {
+    background-color: #c5050c;
+}

@@ -11,80 +11,12 @@ from flask import Flask, jsonify, request, render_template, url_for
 app = Flask(__name__)
 DB = "static/db/aws.db"
 
-
-@app.route("/")
-def home_page():
-    """Fetches the list of available years for AWS and renders the homepage template"""
-    with sqlite3.connect(DB) as connection:
-        yearlist = sorted(
-            year[0]
-            for year in connection.execute("SELECT * FROM aws_10min_years").fetchall()
-        )
-    return render_template("index.html", yearlist=yearlist)
-
-
-@app.route("/station_list")
-def station_list():
-    """Queries the database for available stations based on selected years"""
-    years = [str(year) for year in request.args.get("year").split(",")]
-    with sqlite3.connect(DB) as connection:
-        names = sorted(
-            connection.execute(
-                f"SELECT DISTINCT(name) FROM aws_10min WHERE strftime('%Y', datetime) IN ({','.join('?'*len(years))})",
-                years,
-            ).fetchall()
-        )
-    return jsonify(names)
-
-
-@app.route("/download", methods=["GET"])
-def download_data():
-    """Collects user input, queries the database, constructs and returns our payload"""
-    years = tuple(request.args.get("year").split(","))
-    stations = tuple(request.args.get("station").split(","))
-    measurements = tuple(request.args.get("meas").split(","))
-    extension_type = request.args.get("format")
-    data_array = query_db(years, stations, measurements)
-    flask_excel.init_excel(app)
-    filename = f"AMRDC_AWS_datawarehouse_{datetime.date.today()}.{extension_type}"
-    return flask_excel.make_response_from_array(
-        data_array, file_type=extension_type, file_name=filename
-    )
-
-
-@app.route("/citation", methods=["GET"])
-def generate_citation():
-    """Generate an AWS Collection citation based on user input"""
-    years = request.args.get("year").split(",")
-    yearrange = len(years)
-    if yearrange == 0:
-        return "Error: Incomplete query"
-    elif yearrange == 1:
-        return f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data, {years[0]}. AMRDC Data Repository, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
-    else:
-        return f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data. AMRDC Data Repository. Subset used: {years[0]} - {years[-1]}, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
-
-
-def query_db(years, names, measurements):
-    """Assemble the SELECT statement and query the database"""
-    ### Parse input for AWS names and years and format the strings for use in the database query
-    namelist = tuple(name.replace("%20", " ") for name in names)
-    yearlist = tuple(str(year) for year in years)
-    ### Generate SELECT expression and create header for download file
-    select = f"SELECT name, datetime, {', '.join(measurements)} FROM aws_10min WHERE name IN ({','.join('?'*len(namelist))}) AND strftime('%Y', datetime) IN ({','.join('?'*len(yearlist))})"
-    header = ("name", "datetime") + measurements
-    ### Execute query and return
-    with sqlite3.connect(DB) as connection:
-        data_array = connection.execute(select, namelist + yearlist).fetchall()
-    return tuple(header, data_array)
-
-
 ###########################
 ###     QUERY PAGE      ###
 ###########################
 
 
-@app.route("/query", methods=["GET"])
+@app.route("/", methods=["GET"])
 def query():
     """Renders the user input box"""
     query_type = request.args.get("type")
@@ -137,13 +69,25 @@ def query_results():
         response = connection.execute(select[0], select[1])
         results = response.fetchall()
         columns = tuple(col[0] for col in response.description)
-    return render_template(
-        "query_results.html",
-        query_type=query_type,
-        fields=fields,
-        results=results,
-        columns=columns,
-    )
+    if request.form.get("submit") == "display":
+        return render_template(
+            "query_results.html",
+            query_type=query_type,
+            fields=fields,
+            results=results,
+            columns=columns,
+        )
+    if request.form.get("submit") == "download":
+        flask_excel.init_excel(app)
+        data_array = tuple(columns) + tuple(results)
+        ## MAKE CITATION
+        if startdate[0:4] == enddate[0:4]:
+            citation = f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data, {startdate[0:4]}. AMRDC Data Repository, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
+        else:
+            citation = f"Antarctic Meteorological Research and Data Center: Automatic Weather Station quality-controlled observational data. AMRDC Data Repository. Subset used: {startdate[0:4]} - {enddate[0:4]}, accessed {datetime.date.today()}, https://doi.org/10.48567/1hn2-nw60."
+        return flask_excel.make_response_from_array(
+            data_array, file_type="csv", file_name=f"{citation}.csv"
+        )
 
 
 def init_fields(
@@ -269,6 +213,35 @@ def generate_query(
         select[0] = select[0].replace(" AND name IN (?)", "")
         select[1].remove("all")
     return select
+
+
+###########################
+###     API HOOK        ###
+###########################
+
+
+@app.route("/api/get", methods=["GET"])
+def api_sql_query():
+    ## Get query from address + verify
+    select = request.args.get("query")
+    ## Primitive SQL Injection prevention right here:
+    query_terms = [word.upper() for word in select.replace(";", "").split()]
+    forbidden = [
+        "DROP",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "TRUNCATE",
+        "ADD",
+        "ALTER",
+        "CREATE",
+    ]
+    if (set(query_terms) & set(forbidden)) or (query_terms[0] != "SELECT"):
+        return jsonify("Bad select statement. No data returned. ")
+    ## Query DB and return results as JSON
+    with sqlite3.connect(DB) as connection:
+        data_array = connection.execute(select).fetchall()
+    return jsonify(data_array)
 
 
 ###########################

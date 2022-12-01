@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/query_box.css') }}">
 <script type="text/javascript" src="{{ url_for('static', filename='js/query_box.js') }}"></script>
 
-Show me...
+<h4>Show me...</h4>
 
 <div id="query_ui" name="query_ui">
     <form action="/results" method="post">
@@ -145,8 +145,15 @@ Show me...
             </div>
         </div>
 
-        <div id="submit_button">
-            <button type="submit" class="button" onclick="displayLoading()">Submit</button>
+        <div id="buttons">
+            <div id="submit_button">
+                <button type="submit" value="display" name="submit" class="button"
+                    onclick="displayLoading()">Submit</button>
+            </div>
+
+            <div id="download_button">
+                <button type="submit" value="download" name="submit" class="button">Download</button>
+            </div>
         </div>
     </form>
 </div>
