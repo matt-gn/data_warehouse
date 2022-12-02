@@ -61,7 +61,6 @@ def query_results():
         startdate,
         enddate,
     )
-    print(select)  ## DEBUG
     with sqlite3.connect(DB) as connection:
         response = connection.execute(select[0], select[1])
         results = response.fetchall()
@@ -152,28 +151,30 @@ def generate_query(
     query_type, measurement, locations, interval, grouping, startdate, enddate
 ):
     """Generates the SQL SELECT statement based on user input"""
+	## TODO TODO ##
+	## Add 'LIMIT 2000' when displaying data in html; ORDER BY where appropriate
     # ALL DATA, EACH STATION
     if query_type == "all":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, temperature, pressure, wind_speed, wind_direction, humidity, delta_t FROM aws_10min WHERE dateint BETWEEN ? AND ? AND strftime('%H%M', datetime) % ? = 0 AND name IN ({','.join('?'*len(locations))}) LIMIT 2000",
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, temperature, pressure, wind_speed, wind_direction, humidity, delta_t FROM aws_10min WHERE dateint BETWEEN ? AND ? AND strftime('%H%M', datetime) % ? = 0 AND name IN ({','.join('?'*len(locations))})",
             [int(startdate), int(enddate), interval] + locations,
         ]
     ##  AVG, ALL/SELECTED, YEAR
     elif query_type == "avg" and grouping == "year":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, avg({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y', datetime) LIMIT 2000",
+            f"SELECT name, strftime('%Y', datetime) as Year, avg({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y', datetime)",
             [int(startdate), int(enddate)] + locations,
         ]
     ##  AVG, ALL/SELECTED, MONTH
     elif query_type == "avg" and grouping == "month":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, avg({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m', datetime) LIMIT 2000",
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, avg({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m', datetime)",
             [int(startdate), int(enddate)] + locations,
         ]
     ##  AVG, ALL/SELECTED, DAY
     elif query_type == "avg" and grouping == "day":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, avg({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m%d', datetime) LIMIT 2000",
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, avg({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m%d', datetime)",
             [int(startdate), int(enddate)] + locations,
         ]
     ##  AVG, ALL/SELECTED, NAME
@@ -185,19 +186,19 @@ def generate_query(
     ##  MAX/MIN, ALL/SELECTED, YEAR
     elif query_type in ("max", "min") and grouping == "year":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y', datetime) LIMIT 2000",
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y', datetime)",
             [int(startdate), int(enddate)] + locations,
         ]
     ##  MAX/MIN, ALL/SELECTED, MONTH
     elif query_type in ("max", "min") and grouping == "month":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m', datetime) LIMIT 2000",
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m', datetime)",
             [int(startdate), int(enddate)] + locations,
         ]
     ##  MAX/MIN, ALL/SELECTED, DAY
     elif query_type in ("max", "min") and grouping == "day":
         select = [
-            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m%d', datetime) LIMIT 2000",
+            f"SELECT name, strftime('%Y', datetime) as Year, strftime('%m', datetime) as Month, strftime('%d', datetime) as Day, strftime('%H:%M', datetime) as Time, {query_type}({measurement}) FROM aws_10min WHERE dateint BETWEEN ? AND ? AND ({measurement} != 444) AND name IN ({','.join('?'*len(locations))}) GROUP BY name, strftime('%Y%m%d', datetime)",
             [int(startdate), int(enddate)] + locations,
         ]
     ##  MAX/MIN, ALL/SELECTED, NAME
