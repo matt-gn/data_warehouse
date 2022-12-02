@@ -222,7 +222,7 @@ def api_sql_query():
     ## Get query from address + verify
     select = request.args.get("query")
     ## Primitive SQL Injection prevention right here:
-    query_terms = [word.upper() for word in select.replace(";", "").replace("%20", "").split()]
+    query_terms = [word.upper() for word in select.replace(";", "").replace("%20", " ").split()]
     forbidden = [
         "DROP",
         "INSERT",
