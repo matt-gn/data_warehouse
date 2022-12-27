@@ -214,7 +214,7 @@ def generate_query(
 
 
 ###########################
-###     API HOOK        ###
+###     API ENDPOINT    ###
 ###########################
 
 ### TODO This is UNSAFE and for demo purposes only - must be refactored before deploying in production
