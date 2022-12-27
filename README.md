@@ -8,6 +8,7 @@ http://ec2-3-16-41-55.us-east-2.compute.amazonaws.com/
 - Check that your system has Python 3.xx installed: `python --version` (Python 3.7 or greater recommended)
 - Get required packages: `pip install -r requirements.txt`
 - Navigate to `~/data_warehouse/static/db`
+- Set `REPO_KEY` environment variable (contact me for a new personal key)
 - Run `python database.py` to build database. This will take 10-15 minutes and consume roughly 5GB of hard drive space.
 - Navigate to `~/data_warehouse` and run `python main.py`
 - Application runs on `http://localhost:8080/` in your web browser.
