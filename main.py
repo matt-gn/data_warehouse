@@ -219,19 +219,27 @@ def generate_query(
 
 ### TODO This is UNSAFE and for demo purposes only - must be refactored before deploying in production
 '''
+
 ANTI-SQL INJECTION
 
-Use prepared statements and parameterized queries: Prepared statements and parameterized queries
+1: Use prepared statements and parameterized queries: Prepared statements and parameterized queries
 separate SQL code from user input, which helps prevent injection attacks. Instead of concatenating user 
-input into your SQL code, you can use placeholders in your SQL code and then pass the user input as separate 
+input into your SQL code, use placeholders in your SQL code and then pass the user input as separate 
 parameters. This ensures that the user input is treated as a literal value rather than part of the SQL code.
 
-Escape special characters: Special characters such as quotes and semicolons can be used to inject malicious SQL 
-code. To prevent this, you can use the dbapi.escape_string() function to escape special characters in user input.
+PROBLEM WITH 1: We want Owen to have unrestricted access to the database. Prepared statements limit the flexibility
+of quieries.
 
-Use least privilege: We're already providing access to the database through the UI + CSV downloads; perhaps the
+2: Escape special characters: Special characters such as quotes and semicolons can be used to inject malicious SQL 
+code. To prevent this, use the dbapi.escape_string() function to escape special characters in user input.
+
+3: Validate user input to ensure that it meets the requirements of the application. For example, could
+use regular expressions to ensure that user input only contains alphanumeric characters.
+
+4: Use least privilege: We're already providing access to the database through the UI + CSV downloads; perhaps the
 direct JSON-response SQL API endpoint should be private (only accessible within the org via API keys) and force 
 end-users to use the relatively safe web interface.
+
 '''
 
 @application.route("/api/get", methods=["GET"])
