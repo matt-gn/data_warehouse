@@ -217,7 +217,7 @@ def generate_query(
 ###     API HOOK        ###
 ###########################
 
-
+### TODO This is UNSAFE and for demo purposes only - must be refactored before deploying in production
 @application.route("/api/get", methods=["GET"])
 def api_sql_query():
     ## Get query from address + verify
