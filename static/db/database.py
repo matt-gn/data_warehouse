@@ -1,8 +1,8 @@
-import sqlite3, urllib.request, json, ckanapi
+import sqlite3, urllib.request, json, ckanapi, os
 
 DATABASE_NAME = "aws.db"
 SERVER_URL = "https://amrdcdata.ssec.wisc.edu/"
-API_KEY = "28933df5-45b8-41e0-a873-1e29ebc4aca5"
+API_KEY = os.environ['REPO_KEY']
 
 ### UPDATE 11/23/22 :: We're storing the date as an int in `dateint` : YYYYMMDD, as well as a str in `datetime`
 ###                     This allows for efficient formatting and searching
